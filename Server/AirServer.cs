@@ -47,7 +47,7 @@ namespace AirFileExchange.Server
             {
                 get
                 {
-                    return IPAddress.Parse(Helper.LocalIPAddress()).Equals(IpEndPoint.Address);
+                    return Helper.IsIPLocal(IpEndPoint.Address);
                 }
             }
 

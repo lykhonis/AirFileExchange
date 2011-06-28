@@ -7,6 +7,7 @@ using System.IO;
 using System.Security.Principal;
 using System.Windows.Media.Imaging;
 using System.Net;
+using System.Net.Sockets;
 
 namespace AirFileExchange.Air
 {
@@ -82,13 +83,29 @@ namespace AirFileExchange.Air
             return ImageFromBytes(Convert.FromBase64String(encodedBase64));
         }
 
+        public static bool IsIPLocal(IPAddress ipAddress)
+        {
+            if (ipAddress.AddressFamily.Equals(AddressFamily.InterNetwork))
+            {
+                IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
+                foreach (IPAddress ip in host.AddressList)
+                {
+                    if (ip.Equals(ipAddress))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         public static string LocalIPAddress()
         {
             string localIP = string.Empty;
             IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
             foreach (IPAddress ip in host.AddressList)
             {
-                if (ip.AddressFamily.ToString() == "InterNetwork")
+                if (ip.AddressFamily.Equals(AddressFamily.InterNetwork))
                 {
                     localIP = ip.ToString();
                     break;
