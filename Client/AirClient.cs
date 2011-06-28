@@ -27,8 +27,7 @@ namespace AirFileExchange.Client
         {
             SendFiles sendFiles = new SendFiles();
             sendFiles.Count = files.Length;
-            sendFiles.Address = Helper.LocalIPAddress();
-            sendFiles.Port = DefaultPort;
+            sendFiles.UserAddress = new UserAddress() { Address = Helper.LocalIPAddress(), Port = DefaultPort };
             sendFiles.Size = 0;
 
             long totalSize = 0, sentTotal = 0, sentCurrent = 0;

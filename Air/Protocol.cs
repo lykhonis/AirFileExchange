@@ -22,11 +22,25 @@ namespace AirFileExchange.Air
     }
 
     [Serializable]
+    [XmlRoot("user-address")]
+    public class UserAddress
+    {
+        [XmlAttribute("address")]
+        public string Address;
+
+        [XmlAttribute("port")]
+        public int Port;
+    }
+
+    [Serializable]
     [XmlRoot("request-presence")]
     public class RequestPresence
     {
         [XmlAttribute("status")]
         public string Status;
+
+        [XmlElement("user-address")]
+        public UserAddress UserAddress;
 
         [XmlElement("user-info")]
         public UserInfo UserInfo;
@@ -47,17 +61,14 @@ namespace AirFileExchange.Air
     [XmlRoot("send-files")]
     public class SendFiles
     {
-        [XmlAttribute("address")]
-        public string Address;
-
-        [XmlAttribute("port")]
-        public int Port;
-
         [XmlAttribute("count")]
         public int Count;
 
         [XmlAttribute("size")]
         public long Size;
+
+        [XmlElement("user-address")]
+        public UserAddress UserAddress;
 
         [XmlArray("files")]
         [XmlArrayItem("file", typeof(SendFile))]
@@ -68,11 +79,8 @@ namespace AirFileExchange.Air
     [XmlRoot("send-files-data")]
     public class SendFilesData
     {
-        [XmlAttribute("address")]
-        public string Address;
-
-        [XmlAttribute("port")]
-        public int Port;
+        [XmlElement("user-address")]
+        public UserAddress UserAddress;
 
         [XmlAttribute("status")]
         public string Status;

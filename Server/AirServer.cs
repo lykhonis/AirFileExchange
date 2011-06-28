@@ -130,7 +130,8 @@ namespace AirFileExchange.Server
             this.listeningFilesThread = null;
         }
 
-        public void ReceiveFilesFrom(IPEndPointHolder ipEndPoint, TcpClient client, SendFiles sendFiles, bool receive, object state, UserReceiveFilesProgress progress)
+        public void ReceiveFilesFrom(IPEndPointHolder ipEndPoint, TcpClient client, SendFiles sendFiles, bool receive, object state, 
+            UserReceiveFilesProgress progress)
         {
             try
             {
@@ -139,8 +140,11 @@ namespace AirFileExchange.Server
                 {
                     byte[] buffer = Encoding.UTF8.GetBytes(Helper.XmlSerialize<SendFilesData>(new SendFilesData()
                     {
-                        Address = ipEndPoint.IpEndPoint.Address.ToString(),
-                        Port = ipEndPoint.IpEndPoint.Port,
+                        UserAddress = new UserAddress() 
+                        { 
+                            Address = Helper.LocalIPAddress(),
+                            Port = AirClient.DefaultPort
+                        },
                         Status = receive ? "allowed" : "denied"
                     }));
                     networkStream.Write(buffer, 0, buffer.Length);
@@ -271,7 +275,7 @@ namespace AirFileExchange.Server
                     if (UserWantToSendFiles != null)
                     {
                         AirServer.IPEndPointHolder ipEndPointHolder = new IPEndPointHolder();
-                        ipEndPointHolder.IpEndPoint = new IPEndPoint(IPAddress.Parse(sendFiles.Address), sendFiles.Port);
+                        ipEndPointHolder.IpEndPoint = new IPEndPoint(IPAddress.Parse(sendFiles.UserAddress.Address), sendFiles.UserAddress.Port);
                         ipEndPointHolder.IsAvailable = true;
 
                         UserWantToSendFiles(sendFiles, ipEndPointHolder, client);
@@ -341,6 +345,11 @@ namespace AirFileExchange.Server
                         Udp.SendBroadcast(Helper.XmlSerialize<RequestPresence>(new RequestPresence()
                         {
                             Status = "ask",
+                            UserAddress = new UserAddress()
+                            {
+                                Address = Helper.LocalIPAddress(),
+                                Port = Udp.DefaultPort
+                            },
                             UserInfo = null
                         }));
 
@@ -366,6 +375,11 @@ namespace AirFileExchange.Server
                         Udp.SendBroadcast(Helper.XmlSerialize<RequestPresence>(new RequestPresence()
                         {
                             Status = "ask",
+                            UserAddress = new UserAddress()
+                            {
+                                Address = Helper.LocalIPAddress(),
+                                Port = Udp.DefaultPort
+                            },
                             UserInfo = null
                         }));
 
@@ -412,12 +426,12 @@ namespace AirFileExchange.Server
                                 if ("presence".Equals(requestPresence.Status))
                                 {
                                     IPEndPointHolder ipEndPointHolder = listOfAvailablePCs.Find(
-                                        item => item.IpEndPoint.Address.Equals(remotePoint.Address));
+                                        item => item.IpEndPoint.Address.Equals(IPAddress.Parse(requestPresence.UserAddress.Address)));
                                     if (ipEndPointHolder == null)
                                     {
                                         ipEndPointHolder = new IPEndPointHolder();
-                                        ipEndPointHolder.IpEndPoint = remotePoint;
-                                        ipEndPointHolder.IpEndPoint.Port = Udp.DefaultPort;
+                                        ipEndPointHolder.IpEndPoint = new IPEndPoint(IPAddress.Parse(requestPresence.UserAddress.Address),
+                                            requestPresence.UserAddress.Port);
                                         ipEndPointHolder.IsAvailable = true;
 
                                         listOfAvailablePCs.Add(ipEndPointHolder);
@@ -447,22 +461,38 @@ namespace AirFileExchange.Server
                                         Udp.Send(Helper.XmlSerialize<RequestPresence>(new RequestPresence()
                                         {
                                             Status = "presence",
+                                            UserAddress = new UserAddress()
+                                            {
+                                                Address = Helper.LocalIPAddress(),
+                                                Port = Udp.DefaultPort
+                                            },
                                             UserInfo = userInfo
-                                        }), new IPEndPoint(remotePoint.Address, Udp.DefaultPort));
+                                        }), new IPEndPoint(IPAddress.Parse(requestPresence.UserAddress.Address), 
+                                            requestPresence.UserAddress.Port));
 
-                                        Log.WriteLn("Send: presence - {0}", remotePoint.Address.ToString());
+                                        Log.WriteLn("Send: presence - {0}", requestPresence.UserAddress.Address.ToString());
 
                                         IPEndPointHolder ipEndPointHolder = listOfAvailablePCs.Find(
-                                            item => item.IpEndPoint.Address.Equals(remotePoint.Address));
+                                            item => item.IpEndPoint.Address.Equals(IPAddress.Parse(requestPresence.UserAddress.Address)));
                                         if (ipEndPointHolder == null)
                                         {
                                             Udp.Send(Helper.XmlSerialize<RequestPresence>(new RequestPresence()
                                             {
                                                 Status = "ask",
+                                                UserAddress = new UserAddress()
+                                                {
+                                                    Address = Helper.LocalIPAddress(),
+                                                    Port = Udp.DefaultPort
+                                                },
                                                 UserInfo = null
-                                            }), new IPEndPoint(remotePoint.Address, Udp.DefaultPort));
+                                            }), new IPEndPoint(IPAddress.Parse(requestPresence.UserAddress.Address),
+                                                requestPresence.UserAddress.Port));
 
-                                            Log.WriteLn("Send: ask - {0}", remotePoint.Address.ToString());
+                                            Log.WriteLn("Send: ask - {0}", requestPresence.UserAddress.Address.ToString());
+                                        }
+                                        else
+                                        {
+                                            ipEndPointHolder.IsAvailable = true;
                                         }
                                     }
                                 }
@@ -507,6 +537,11 @@ namespace AirFileExchange.Server
                             Udp.Send(Helper.XmlSerialize<RequestPresence>(new RequestPresence()
                             {
                                 Status = "left",
+                                UserAddress = new UserAddress()
+                                {
+                                    Address = Helper.LocalIPAddress(),
+                                    Port = Udp.DefaultPort
+                                },
                                 UserInfo = null
                             }), ipEndPointHolder.IpEndPoint);
 
