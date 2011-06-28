@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Net.Sockets;
-using System.Net;
 using System.Runtime.Serialization;
+using System.Net;
 
 namespace AirFileExchange.Air
 {
@@ -16,6 +16,8 @@ namespace AirFileExchange.Air
         {
             using (UdpClient udpClient = new UdpClient())
             {
+                udpClient.EnableBroadcast = true;
+
                 byte[] buffer = Encoding.UTF8.GetBytes(message);
                 udpClient.Send(buffer, buffer.Length, udpPoint);
             }

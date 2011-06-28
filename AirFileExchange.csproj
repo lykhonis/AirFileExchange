@@ -65,6 +65,7 @@
     <Compile Include="Controls\UserIcon.xaml.cs">
       <DependentUpon>UserIcon.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Log.cs" />
     <Compile Include="Server\AirServer.cs" />
     <Page Include="Controls\UserIcon.xaml">
       <SubType>Designer</SubType>

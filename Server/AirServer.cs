@@ -34,9 +34,6 @@ namespace AirFileExchange.Server
 
         public delegate void UserReceiveFilesComplete(SendFiles sendFiles, IPEndPointHolder remotePoint, object state, Exception e);
 
-        public event EventHandler BeginUsersDiscovering;
-        public event EventHandler EndUsersDiscovering;
-
         public class IPEndPointHolder : IEquatable<IPEndPointHolder>
         {
             public const double DefaultTimeout = 60 * 1000;
@@ -113,6 +110,8 @@ namespace AirFileExchange.Server
 
             this.listeningFilesThread = new Thread(new ThreadStart(ListeningFiles));
             this.listeningFilesThread.Start();
+
+            //AskForPresence();
         }
 
         public void Stop()
@@ -333,6 +332,26 @@ namespace AirFileExchange.Server
             }
         }
 
+        private void AskForPresence()
+        {
+            new Thread(new ThreadStart(() =>
+                {
+                    try
+                    {
+                        Udp.SendBroadcast(Helper.XmlSerialize<RequestPresence>(new RequestPresence()
+                        {
+                            Status = "ask",
+                            UserInfo = null
+                        }));
+
+                        Log.WriteLn("Send: ask - broadcast");
+                    }
+                    catch
+                    {
+                    }
+                })).Start();
+        }
+
         private void DiscoveringUsers()
         {
             Random random = new Random();
@@ -342,12 +361,6 @@ namespace AirFileExchange.Server
                 try
                 {
                     FilterTimeoutUsers();
-
-                    if (BeginUsersDiscovering != null)
-                    {
-                        BeginUsersDiscovering(this, new EventArgs());
-                    }
-
                     try
                     {
                         Udp.SendBroadcast(Helper.XmlSerialize<RequestPresence>(new RequestPresence()
@@ -355,14 +368,11 @@ namespace AirFileExchange.Server
                             Status = "ask",
                             UserInfo = null
                         }));
+
+                        Log.WriteLn("Send: ask - broadcast");
                     }
                     catch
                     {
-                    }
-
-                    if (EndUsersDiscovering != null)
-                    {
-                        EndUsersDiscovering(this, new EventArgs());
                     }
                     Thread.Sleep(random.Next(8000, 14000));
                 }
@@ -376,6 +386,8 @@ namespace AirFileExchange.Server
         {
             using (UdpClient udpClient = new UdpClient())
             {
+                udpClient.EnableBroadcast = true;
+
                 IPEndPoint udpBroadcastPoint = new IPEndPoint(IPAddress.Any, Udp.DefaultPort);
                 udpClient.Client.Bind(udpBroadcastPoint);
 
@@ -395,6 +407,8 @@ namespace AirFileExchange.Server
                             {
                                 RequestPresence requestPresence = Helper.XmlDeserialize<RequestPresence>(Encoding.UTF8.GetString(buffer));
 
+                                Log.WriteLn("Recv: {0} - {1}", requestPresence.Status, remotePoint.Address.ToString());
+
                                 if ("presence".Equals(requestPresence.Status))
                                 {
                                     IPEndPointHolder ipEndPointHolder = listOfAvailablePCs.Find(
@@ -403,6 +417,7 @@ namespace AirFileExchange.Server
                                     {
                                         ipEndPointHolder = new IPEndPointHolder();
                                         ipEndPointHolder.IpEndPoint = remotePoint;
+                                        ipEndPointHolder.IpEndPoint.Port = Udp.DefaultPort;
                                         ipEndPointHolder.IsAvailable = true;
 
                                         listOfAvailablePCs.Add(ipEndPointHolder);
@@ -429,11 +444,26 @@ namespace AirFileExchange.Server
 
                                     if (isVisible)
                                     {
-                                        Udp.SendBroadcast(Helper.XmlSerialize<RequestPresence>(new RequestPresence()
+                                        Udp.Send(Helper.XmlSerialize<RequestPresence>(new RequestPresence()
                                         {
                                             Status = "presence",
                                             UserInfo = userInfo
-                                        }));
+                                        }), new IPEndPoint(remotePoint.Address, Udp.DefaultPort));
+
+                                        Log.WriteLn("Send: presence - {0}", remotePoint.Address.ToString());
+
+                                        IPEndPointHolder ipEndPointHolder = listOfAvailablePCs.Find(
+                                            item => item.IpEndPoint.Address.Equals(remotePoint.Address));
+                                        if (ipEndPointHolder == null)
+                                        {
+                                            Udp.Send(Helper.XmlSerialize<RequestPresence>(new RequestPresence()
+                                            {
+                                                Status = "ask",
+                                                UserInfo = null
+                                            }), new IPEndPoint(remotePoint.Address, Udp.DefaultPort));
+
+                                            Log.WriteLn("Send: ask - {0}", remotePoint.Address.ToString());
+                                        }
                                     }
                                 }
 
@@ -472,11 +502,16 @@ namespace AirFileExchange.Server
                             UserPresenceReceivedAsk(out isVisible, ref userInfo);
                         }
 
-                        Udp.SendBroadcast(Helper.XmlSerialize<RequestPresence>(new RequestPresence()
+                        foreach (IPEndPointHolder ipEndPointHolder in listOfAvailablePCs)
                         {
-                            Status = "left",
-                            UserInfo = userInfo
-                        }));
+                            Udp.Send(Helper.XmlSerialize<RequestPresence>(new RequestPresence()
+                            {
+                                Status = "left",
+                                UserInfo = null
+                            }), ipEndPointHolder.IpEndPoint);
+
+                            Log.WriteLn("Send: left - {0}", ipEndPointHolder.IpEndPoint.Address.ToString());
+                        }
                     }
                 }
             }
