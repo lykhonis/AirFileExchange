@@ -29,6 +29,7 @@ namespace AirFileExchange
         private AirServer airServer;
         private AirClient airClient;
         private bool isClosed;
+        private string UserAccountPicture;
 
         public MainWindow()
         {
@@ -74,12 +75,17 @@ namespace AirFileExchange
 
         void airServer_UserPresenceReceivedAsk(out bool isVisible, ref Air.UserInfo userInfo)
         {
+            if (string.IsNullOrEmpty(UserAccountPicture))
+            {
+                UserAccountPicture = AirFileExchange.Air.Helper.UserAccountPictureAsBase64();
+            }
+
             isVisible = true;
             userInfo = new AirFileExchange.Air.UserInfo()
             {
                 DisplayName = Environment.UserName,
                 ComputerName = Environment.MachineName,
-                Icon = AirFileExchange.Air.Helper.UserAccountPictureAsBase64()
+                Icon = UserAccountPicture
             };
         }
 
