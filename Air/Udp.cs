@@ -14,9 +14,6 @@ namespace AirFileExchange.Air
 
         public static void Send(string message, IPEndPoint udpPoint)
         {
-
-
-
             using (UdpClient udpClient = new UdpClient())
             {
                 byte[] buffer = Encoding.UTF8.GetBytes(message);
