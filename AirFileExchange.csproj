@@ -58,6 +58,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="AboutWindow.xaml.cs">
+      <DependentUpon>AboutWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Air\Udp.cs" />
     <Compile Include="Air\Helper.cs" />
     <Compile Include="Air\Protocol.cs" />
@@ -67,6 +70,10 @@
     </Compile>
     <Compile Include="Log.cs" />
     <Compile Include="Server\AirServer.cs" />
+    <Page Include="AboutWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Controls\UserIcon.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -117,6 +124,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\icon-afe.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\icon-help.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

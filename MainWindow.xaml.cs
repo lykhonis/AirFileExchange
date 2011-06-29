@@ -263,5 +263,12 @@ namespace AirFileExchange
             userIcon.ProgressValue = 0;
             userIcon.LastStatus = e == null ? UserIcon.OperationStatus.Success : UserIcon.OperationStatus.Failed;
         }
+
+        private void ButtonHelp_Click(object sender, RoutedEventArgs e)
+        {
+            AboutWindow aboutWindow = new AboutWindow();
+            aboutWindow.Owner = this;
+            aboutWindow.ShowDialog();
+        }
     }
 }
