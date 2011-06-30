@@ -105,10 +105,30 @@ namespace AirFileExchange
                 userIcon.TextComputerName.Text = request.UserInfo.ComputerName;
                 userIcon.ImageIcon.Source = AirFileExchange.Air.Helper.ImageFromBase64(request.UserInfo.Icon);
                 userIcon.Click += new EventHandler(userIcon_Click);
+                userIcon.DropFileList += new UserIcon.EventDropFileList(userIcon_DropFileList);
                 PanelOfUsers.Children.Add(userIcon);
 
                 userIcon.Popup();
             }
+        }
+
+        void userIcon_DropFileList(object sender, string[] fileDropList)
+        {
+            UserIcon userIcon = (UserIcon)sender;
+
+            if (userIcon.IsSuspend || userIcon.ProgressValue != 0)
+            {
+                return;
+            }
+
+            userIcon.IsCanceled = false;
+            userIcon.IsSuspend = true;
+            userIcon.LastStatus = UserIcon.OperationStatus.None;
+
+            airClient.SendFilesToAsync(userIcon.RemotePoint.IpEndPoint, fileDropList,
+                new AirClient.SendFilesProgress(airClient_SendFilesProgress),
+                userIcon, new AirClient.SendFilesComplete(airClient_SendFilesTo),
+                new AirClient.SendFilesDenied(airClient_SendFilesDenied));
         }
 
         void userIcon_Click(object sender, EventArgs e)

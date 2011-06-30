@@ -10,7 +10,9 @@
     	<TextBlock Margin="140,85,0,0" TextWrapping="Wrap" Text="Developer: Vladimir Lichonos" VerticalAlignment="Top" HorizontalAlignment="Left" FontSize="13.333"/>
     	<TextBlock Margin="140,129,8,0" TextWrapping="Wrap" Text="AirFileExchange unrelated to AirDrop, Mac OS X Lion or other software company Apple Inc. All trademarks are the property of their respective owners." FontSize="13.333" VerticalAlignment="Top" Foreground="#FF727272"/>
     	<TextBlock Margin="140,194,8,0" TextWrapping="Wrap" Text="Vladimir Lichonos assumes no responsibility for any negative actions resulting from the work of AirFileExchange." FontSize="13.333" VerticalAlignment="Top" Foreground="#FF727272"/>
-    	<TextBlock Margin="140,0,8,8" TextWrapping="Wrap" Text="© 2011 Vladimir Lichonos. All rights reserved." Foreground="#FF727272" VerticalAlignment="Bottom" HorizontalAlignment="Left"/>
+    	<TextBlock Margin="140,0,0,46" TextWrapping="Wrap" Text="© 2011 Vladimir Lichonos. All rights reserved." Foreground="#FF727272" VerticalAlignment="Bottom" HorizontalAlignment="Left"/>
+    	<Button x:Name="ButtonUpdate" Content="Check Updates" HorizontalAlignment="Right" Margin="0,0,87,8" VerticalAlignment="Bottom" Width="140" Click="ButtonUpdate_Click"/>
+    	<Button x:Name="ButtonOK" Content="OK" Margin="0,0,8,8" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="75" IsDefault="True" Click="ButtonOK_Click"/>
         
     </Grid>
 </Window>

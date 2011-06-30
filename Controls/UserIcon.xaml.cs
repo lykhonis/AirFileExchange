@@ -14,6 +14,7 @@ using System.Windows.Shapes;
 using System.Net;
 using System.Windows.Media.Animation;
 using AirFileExchange.Server;
+using System.Collections.Specialized;
 
 namespace AirFileExchange.Controls
 {
@@ -26,6 +27,9 @@ namespace AirFileExchange.Controls
         public bool IsCanceled;
 
         public event EventHandler Click;
+
+        public delegate void EventDropFileList(object sender, string[] fileDropList);
+        public event EventDropFileList DropFileList;
 
         public UserIcon()
         {
@@ -138,6 +142,74 @@ namespace AirFileExchange.Controls
                         (Resources["ImageStatusPopupStoryboard"] as Storyboard).Begin();
                         break;
                 }
+            }
+        }
+
+        private void userControl_DragEnter(object sender, DragEventArgs e)
+        {
+            DataObject dataObject = (DataObject)e.Data;
+            if (dataObject.ContainsFileDropList())
+            {
+                e.Handled = true;
+                e.Effects = DragDropEffects.Copy;
+            }
+            else
+            {
+                e.Handled = false;
+                e.Effects = DragDropEffects.None;
+            }
+        }
+
+        private void userControl_DragOver(object sender, DragEventArgs e)
+        {
+            DataObject dataObject = (DataObject)e.Data;
+            if (dataObject.ContainsFileDropList())
+            {
+                e.Handled = true;
+                e.Effects = DragDropEffects.Copy;
+            }
+            else
+            {
+                e.Handled = false;
+                e.Effects = DragDropEffects.None;
+            }
+        }
+
+        private void userControl_DragLeave(object sender, DragEventArgs e)
+        {
+            DataObject dataObject = (DataObject)e.Data;
+            if (dataObject.ContainsFileDropList())
+            {
+                e.Handled = true;
+                e.Effects = DragDropEffects.Copy;
+            }
+            else
+            {
+                e.Handled = false;
+                e.Effects = DragDropEffects.None;
+            }
+        }
+
+        private void userControl_Drop(object sender, DragEventArgs e)
+        {
+            DataObject dataObject = (DataObject)e.Data;
+            if (dataObject.ContainsFileDropList())
+            {
+                e.Handled = true;
+                e.Effects = DragDropEffects.Copy;
+
+                StringCollection fileDropList = dataObject.GetFileDropList();
+                if (DropFileList != null)
+                {
+                    string[] list = new string[fileDropList.Count];
+                    fileDropList.CopyTo(list, 0);
+                    DropFileList(this, list);
+                }
+            }
+            else
+            {
+                e.Handled = false;
+                e.Effects = DragDropEffects.None;
             }
         }
     }
