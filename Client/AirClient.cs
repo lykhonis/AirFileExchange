@@ -12,18 +12,27 @@ namespace AirFileExchange.Client
 {
     public class AirClient
     {
+        public class AirDeniedException : Exception
+        {
+            public AirDeniedException()
+            {
+            }
+
+            public AirDeniedException(string message) : base(message)
+            {
+            }
+        }
+
         public const int DefaultPort = 3001;
 
         public delegate void SendFilesProgress(string file, IPAddress ipAddress, long sentCurrent, long currentSize,
             long sentTotal, long totalSize, object state, out bool cancel);
 
-        public delegate void SendFilesDenied(IPAddress ipAddress, string[] files, object state);
-
         public AirClient()
         {
         }
 
-        public void SendFilesTo(IPAddress ipAddress, string[] files, object state, SendFilesProgress progress, SendFilesDenied denied)
+        public void SendFilesTo(IPAddress ipAddress, string[] files, object state, SendFilesProgress progress)
         {
             SendFiles sendFiles = new SendFiles();
             sendFiles.Count = files.Length;
@@ -78,6 +87,7 @@ namespace AirFileExchange.Client
 
                             foreach (string file in files)
                             {
+                                // not open a file from user's desktop directory ???
                                 using (FileStream fileStream = new FileStream(file, FileMode.Open, FileAccess.Read))
                                 {
                                     sentCurrent = 0;
@@ -103,10 +113,7 @@ namespace AirFileExchange.Client
                         }
                         else
                         {
-                            if (denied != null)
-                            {
-                                denied(ipAddress, files, state);
-                            }
+                            throw new AirDeniedException();
                         }
                     }
                     finally
@@ -121,13 +128,13 @@ namespace AirFileExchange.Client
 
         public delegate void SendFilesComplete(object state, Exception e);
         public void SendFilesToAsync(IPEndPoint ipEndPoint, string[] files, SendFilesProgress progress, object state,
-            SendFilesComplete complete, SendFilesDenied denied)
+            SendFilesComplete complete)
         {
             new Thread(new ThreadStart(() =>
                 {
                     try
                     {
-                        SendFilesTo(ipEndPoint.Address, files, state, progress, denied);
+                        SendFilesTo(ipEndPoint.Address, files, state, progress);
                         if (complete != null)
                         {
                             complete(state, null);

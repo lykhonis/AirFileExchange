@@ -127,8 +127,7 @@ namespace AirFileExchange
 
             airClient.SendFilesToAsync(userIcon.RemotePoint.IpEndPoint, fileDropList,
                 new AirClient.SendFilesProgress(airClient_SendFilesProgress),
-                userIcon, new AirClient.SendFilesComplete(airClient_SendFilesTo),
-                new AirClient.SendFilesDenied(airClient_SendFilesDenied));
+                userIcon, new AirClient.SendFilesComplete(airClient_SendFilesTo));
         }
 
         void userIcon_Click(object sender, EventArgs e)
@@ -163,28 +162,12 @@ namespace AirFileExchange
 
                 airClient.SendFilesToAsync(userIcon.RemotePoint.IpEndPoint, openFileDialog.FileNames,
                     new AirClient.SendFilesProgress(airClient_SendFilesProgress),
-                    userIcon, new AirClient.SendFilesComplete(airClient_SendFilesTo),
-                    new AirClient.SendFilesDenied(airClient_SendFilesDenied));
+                    userIcon, new AirClient.SendFilesComplete(airClient_SendFilesTo));
             }
             else
             {
                 userIcon.ProgressValue = 0;
             }
-        }
-
-        void airClient_SendFilesDenied(IPAddress ipAddress, string[] files, object state)
-        {
-            /*foreach (UserIcon userIcon in PanelOfUsers.Children)
-            {
-                if (userIcon.RemotePoint.IpEndPoint.Address.Equals(ipAddress))
-                {
-                    userIcon.IsSuspend = false;
-
-                    MessageBox.Show(this, string.Format("\"{0}\" denied your request to send the files.", userIcon.TextDisplayName.Text), 
-                        "AirFileExchange - Receiving files denied");
-                    return;
-                }
-            }*/
         }
 
         void airClient_SendFilesProgress(string file, IPAddress ipAddress, long sentCurrent, long currentSize,
@@ -219,6 +202,12 @@ namespace AirFileExchange
             userIcon.IsSuspend = false;
             userIcon.ProgressValue = 0;
             userIcon.LastStatus = e == null ? UserIcon.OperationStatus.Success : UserIcon.OperationStatus.Failed;
+
+            if (e is AirClient.AirDeniedException)
+            {
+                MessageBox.Show(this, string.Format("\"{0}\" denied your request to send the files.", userIcon.TextDisplayName.Text),
+                    "AirFileExchange - Receiving files denied");
+            }
         }
 
         void airServer_UserWantToSendFiles(Air.SendFiles sendFiles, AirServer.IPEndPointHolder remotePoint, TcpClient client)
@@ -246,14 +235,15 @@ namespace AirFileExchange
                     }
                     else
                     {
-                        airServer.ReceiveFilesFromAsync(remotePoint, client, sendFiles, false, null, null, null);
+                        airServer.ReceiveFilesFromAsync(remotePoint, client, sendFiles, false, userIcon, null, 
+                            new AirServer.UserReceiveFilesComplete(airServer_UserReceiveFilesComplete));
                     }
                     return;
                 }
             }
         }
 
-        void airServer_UserReceiveFilesProgress(AirFileExchange.Air.SendFile sendFile, AirServer.IPEndPointHolder remotePoint, 
+        void airServer_UserReceiveFilesProgress(AirFileExchange.Air.SendFile sendFile, AirServer.IPEndPointHolder remotePoint,
             long receivedCurrent, long currentSize, long receivedTotal, long totalSize, object state, out bool cancel)
         {
             UserIcon userIcon = (UserIcon)state;
@@ -270,7 +260,7 @@ namespace AirFileExchange
             userIcon.ProgressValue = 10000 * receivedTotal / totalSize;
         }
 
-        void airServer_UserReceiveFilesComplete(AirFileExchange.Air.SendFiles sendFiles, AirServer.IPEndPointHolder remotePoint, 
+        void airServer_UserReceiveFilesComplete(AirFileExchange.Air.SendFiles sendFiles, AirServer.IPEndPointHolder remotePoint,
             object state, Exception e)
         {
             if (Dispatcher.Thread != Thread.CurrentThread)

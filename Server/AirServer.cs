@@ -130,7 +130,7 @@ namespace AirFileExchange.Server
             this.listeningFilesThread = null;
         }
 
-        public void ReceiveFilesFrom(IPEndPointHolder ipEndPoint, TcpClient client, SendFiles sendFiles, bool receive, object state, 
+        public void ReceiveFilesFrom(IPEndPointHolder ipEndPoint, TcpClient client, SendFiles sendFiles, bool receive, object state,
             UserReceiveFilesProgress progress)
         {
             try
@@ -140,8 +140,8 @@ namespace AirFileExchange.Server
                 {
                     byte[] buffer = Encoding.UTF8.GetBytes(Helper.XmlSerialize<SendFilesData>(new SendFilesData()
                     {
-                        UserAddress = new UserAddress() 
-                        { 
+                        UserAddress = new UserAddress()
+                        {
                             Address = Helper.LocalIPAddress(),
                             Port = AirClient.DefaultPort
                         },
@@ -150,75 +150,77 @@ namespace AirFileExchange.Server
                     networkStream.Write(buffer, 0, buffer.Length);
                 }
 
-                if (receive)
+                if (!receive)
                 {
-                    int i = 0;
-                    long n = 0;
-                    bool cancel = false;
+                    throw new OperationCanceledException();
+                }
 
-                    long totalSize = 0, receivedTotal = 0, receivedCurrent = 0;
+                int i = 0;
+                long n = 0;
+                bool cancel = false;
 
-                    foreach (SendFile file in sendFiles.Files)
+                long totalSize = 0, receivedTotal = 0, receivedCurrent = 0;
+
+                foreach (SendFile file in sendFiles.Files)
+                {
+                    totalSize += file.Size;
+                }
+
+                string folder = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + "\\Air File Exchange\\";
+                Directory.CreateDirectory(folder);
+
+                foreach (SendFile file in sendFiles.Files)
+                {
+                    using (FileStream fileStream = new FileStream(folder + file.Name, FileMode.OpenOrCreate, FileAccess.Write))
                     {
-                        totalSize += file.Size;
-                    }
+                        fileStream.SetLength(0);
 
-                    string folder = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + "\\Air File Exchange\\";
-                    Directory.CreateDirectory(folder);
+                        receivedCurrent = 0;
 
-                    foreach (SendFile file in sendFiles.Files)
-                    {
-                        using (FileStream fileStream = new FileStream(folder + file.Name, FileMode.OpenOrCreate, FileAccess.Write))
+                        if (i - n > 0)
                         {
-                            fileStream.SetLength(0);
+                            fileStream.Write(bytes, (int)n, i - (int)n);
 
-                            receivedCurrent = 0;
+                            receivedCurrent += i - (int)n;
+                            receivedTotal += i - (int)n;
 
-                            if (i - n > 0)
+                            if (progress != null)
                             {
-                                fileStream.Write(bytes, (int)n, i - (int)n);
-
-                                receivedCurrent += i - (int)n;
-                                receivedTotal += i - (int)n;
-
-                                if (progress != null)
-                                {
-                                    progress(file, ipEndPoint, receivedCurrent, file.Size, receivedTotal, totalSize, state, out cancel);
-                                }
-                            }
-
-                            while (!cancel && (i = networkStream.Read(bytes, 0, bytes.Length)) != 0)
-                            {
-                                n = file.Size - fileStream.Length;
-                                if (i <= n)
-                                {
-                                    n = i;
-                                }
-                                fileStream.Write(bytes, 0, (int)n);
-
-                                receivedCurrent += n;
-                                receivedTotal += n;
-
-                                if (progress != null)
-                                {
-                                    progress(file, ipEndPoint, receivedCurrent, file.Size, receivedTotal, totalSize, state, out cancel);
-                                }
-
-                                if (file.Size == fileStream.Length)
-                                {
-                                    break;
-                                }
+                                progress(file, ipEndPoint, receivedCurrent, file.Size, receivedTotal, totalSize, state, out cancel);
                             }
                         }
-                        if (cancel)
+
+                        while (!cancel && (i = networkStream.Read(bytes, 0, bytes.Length)) != 0)
                         {
-                            throw new OperationCanceledException();
+                            n = file.Size - fileStream.Length;
+                            if (i <= n)
+                            {
+                                n = i;
+                            }
+                            fileStream.Write(bytes, 0, (int)n);
+
+                            receivedCurrent += n;
+                            receivedTotal += n;
+
+                            if (progress != null)
+                            {
+                                progress(file, ipEndPoint, receivedCurrent, file.Size, receivedTotal, totalSize, state, out cancel);
+                            }
+
+                            if (file.Size == fileStream.Length)
+                            {
+                                break;
+                            }
                         }
                     }
-                    if (totalSize > receivedTotal)
+                    if (cancel)
                     {
                         throw new OperationCanceledException();
                     }
+                }
+                if (totalSize > receivedTotal)
+                {
+                    throw new OperationCanceledException();
                 }
             }
             finally
@@ -227,7 +229,7 @@ namespace AirFileExchange.Server
             }
         }
 
-        public void ReceiveFilesFromAsync(IPEndPointHolder ipEndPoint, TcpClient client, SendFiles sendFiles, bool receive, object state, 
+        public void ReceiveFilesFromAsync(IPEndPointHolder ipEndPoint, TcpClient client, SendFiles sendFiles, bool receive, object state,
             UserReceiveFilesProgress progress, UserReceiveFilesComplete complete)
         {
             new Thread(new ThreadStart(() =>
@@ -467,7 +469,7 @@ namespace AirFileExchange.Server
                                                 Port = Udp.DefaultPort
                                             },
                                             UserInfo = userInfo
-                                        }), new IPEndPoint(IPAddress.Parse(requestPresence.UserAddress.Address), 
+                                        }), new IPEndPoint(IPAddress.Parse(requestPresence.UserAddress.Address),
                                             requestPresence.UserAddress.Port));
 
                                         Log.WriteLn("Send: presence - {0}", requestPresence.UserAddress.Address.ToString());

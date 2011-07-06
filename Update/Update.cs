@@ -30,7 +30,7 @@ namespace AirFileExchange
         }
 
         private const string HttpUpdateUrl = "http://vladli.com/afe/update/";
-        private const string CurrentVersion = "1.0.0.0";
+        private const string CurrentVersion = "1.0.0.1";
 
         private static int CompareVersion(string first, string second)
         {
